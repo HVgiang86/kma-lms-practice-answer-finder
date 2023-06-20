@@ -1,0 +1,687 @@
+var KEY_DEVICE = '---yek_ecived';
+
+
+function addTidiochat(){	
+		var s = document.createElement("script");
+		s.type = "text/javascript";
+		s.src = "//code.tidio.co/bvyt1lp3l4gpcew4dlikdgdxnnohdmlh.js";
+		s.setAttribute('async','');
+		document.body.appendChild(s);
+}
+
+function openEditUserInfoDialog(){
+	$('#modal-edit-info').modal('show');
+}
+
+function onLogout(callback) {
+	$.post('/api/logout', {}, function() {
+		if(callback && typeof callback === 'function'){
+			callback();
+		} else {
+			window.location.reload();
+		}
+	});
+}
+
+function onChangeAndCheckCoincideEmail(input, callback) {
+	input = $(input);
+	let value = input.val();
+	value = value ? value.trim() : '';
+//	console.log('onChangeAndCheckCoincideEmail', value);
+	let currentUserId = input.attr('data-current-user');
+	if(!Config.CHECK_COINCIDE_INFO || !value || !validateEmail(value)){
+		return;
+	}
+	$.post('/api/check-coincide-email', { email: value, currentUserId: currentUserId }, function(data){
+//		console.log('check email', data);
+		let status = data;
+		if(!data){
+			status = Config.CHECK_COINCIDE_INFO_NOT_EXIST;
+		}
+		input.attr('data-status', status);
+		if(status == Config.CHECK_COINCIDE_INFO_EXIST){
+			if(callback){
+				callback(true);
+			} else {
+				_showErrorCheckCoincide(input, 'Email đã được sử dụng!');
+			}
+		} else {
+			if(callback){
+				callback(false);
+			} else {
+				_showErrorCheckCoincide(input, '', true);
+			}
+		}
+	});
+}
+
+function onChangeAndCheckCoincidePhone(input, callback) {
+	input = $(input);
+	let value = input.val();
+	value = value ? value.trim() : '';
+//	console.log('onChangeAndCheckCoincidePhone', value);
+	let currentUserId = input.attr('data-current-user');
+	if(!Config.CHECK_COINCIDE_INFO || !value || !validationPhoneNumber(value)){
+		return;
+	}
+	$.post('/api/check-coincide-phone', { phone: value, currentUserId: currentUserId }, function(data){
+//		console.log('check phone', data);
+		let status = data;
+		if(!data){
+			status = Config.CHECK_COINCIDE_INFO_NOT_EXIST;
+		}
+		input.attr('data-status', status);
+		if(status == Config.CHECK_COINCIDE_INFO_EXIST){
+			if(callback){
+				callback(true);
+			} else {
+				_showErrorCheckCoincide(input, 'Số điện thoại đã được sử dụng!');
+			}
+		} else {
+			if(callback){
+				callback(false);
+			} else {
+				_showErrorCheckCoincide(input, '', true);
+			}
+		}
+	});
+}
+
+function _showErrorCheckCoincide(elem, msg, reset) {
+	let parentElem = elem.parent().parent();
+	let errorPanel = parentElem.find('.error_');
+	if(reset){
+		if(errorPanel.length == 0){
+			parentElem.find('.check-coincide').remove();
+		} else {
+			errorPanel.html('');
+		}
+		clearErrorClass(elem);
+	} else {
+		if(errorPanel.length == 0){
+			if(parentElem.find('.check-coincide').length == 0){
+				msg = $('<div class="check-coincide" style="color:red;font-size:0.8em">' + msg + '</div>');
+				parentElem.append(msg);
+			}
+		} else {
+			errorPanel.html(msg);
+		}
+		addErrorClass(elem);
+	}
+}
+
+function onSignUpUser(button){
+	updateStateButtonLoading(button, 'loading');
+	clearErrorClass(button);
+	var accountElement = $(button).parent().parent().find('#res-account-input');
+	var nameElement = $(button).parent().parent().find('#res-name-input');
+	var emailElement = $(button).parent().parent().find('#res-email-input');
+	var phoneElement = $(button).parent().parent().find('#res-phone-input');
+	var passwordElement = $(button).parent().parent().find('#res-password-input');
+	var rePasswordElement = $(button).parent().parent().find('#res-repassword-input');
+	var provinceElement = $(button).parent().parent().find('#res-province');
+	var categoryElement = $(button).parent().parent().find('#res-school');
+	var errorPanel = $(button).parent().parent().find('.error-login-panel');
+	
+	var account = accountElement.val();
+	account = account ? account.trim().toLowerCase() : '';
+	var name = nameElement.val();
+	var email = emailElement.val();
+	email = email ? email.trim() : '';
+	var phone = phoneElement.val();
+	phone = phone ? phone.trim() : '';
+	var password = passwordElement.val();
+	var rePassword = rePasswordElement.val();
+	var province = provinceElement.children("option:selected").val();
+	var school = categoryElement.children("option:selected").val();
+	if(province === undefined || province === null){
+		province = -1;
+	}
+	if(school === undefined || school === null){
+		school = -1;
+	}
+	
+	if(!account || !validateAccount(account)) {
+		addErrorClass(accountElement);
+		errorPanel.text(localize.accountInvalid);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(!name) {
+		addErrorClass(nameElement);
+		errorPanel.text(localize.invalidName);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(!email || !validateEmail(email)) {
+		addErrorClass(emailElement);
+		errorPanel.text(localize.invalidEmail);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(Config.CHECK_COINCIDE_INFO && emailElement.attr('data-status') == Config.CHECK_COINCIDE_INFO_EXIST){
+		addErrorClass(emailElement);
+		errorPanel.text('Email đã được sử dụng!');
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(!phone || !validationPhoneNumber(phone)) {
+		addErrorClass(phoneElement);
+		errorPanel.text(localize.invalidPhone);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(Config.CHECK_COINCIDE_INFO && phoneElement.attr('data-status') == Config.CHECK_COINCIDE_INFO_EXIST){
+		addErrorClass(phoneElement);
+		errorPanel.text('Số điện thoại đã được sử dụng!');
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(!password) {
+		addErrorClass(passwordElement);
+		errorPanel.text(localize.invalidPass);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(!rePassword) {
+		addErrorClass(rePasswordElement);
+		errorPanel.text(localize.enterpassconfirm);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(password !== rePassword){
+		addErrorClass(rePasswordElement);
+		errorPanel.text(localize.passwordNotMatch);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	errorPanel.text('');
+	let passwordNotEnscript = '';
+	try {
+		passwordNotEnscript = window.btoa(password);
+	} catch(e){}
+	password = encryptPassword(account, password);
+	var userDevicesValue = getDeviceInfo();
+	var userDeviceInfo = userDevicesValue == null ? '' : JSON.stringify(userDevicesValue);
+	var postData = {
+		account: account,
+		name: name,
+		email: email,
+		phone: phone,
+		password: password,
+		province: province,
+		schoolNew : school,
+		passwordNotEnscript: passwordNotEnscript,
+		userDevice: userDeviceInfo
+	}
+	let checkSumData = account + "-" + name + "-" + email + "-" + phone + "-" + password + "-" + province + "-" + school + "-" + passwordNotEnscript;
+	let checkSum = md5(checkSumData);
+	postData.checkSum = checkSum;
+	$.post('/api/web-register', postData, function(data){
+		onLoginSuccess(button, data);
+	})
+}
+function clearErrorClass(element) {
+	$(element).parent().parent().find('.input-error').removeClass('input-error');
+}
+function addErrorClass(element, callback) {
+	if(element.parent().hasClass('input')){
+		parent = element.parent();
+		parent.css('border', '1px solid red').css('color', 'red');
+		element.off('focus').on('focus', function(){
+			parent.css('border', '').css('color', '');
+			callback && callback();
+		});
+	} else {
+		element.css('border', '1px solid red').css('color', 'red');
+		element.off('focus').on('focus', function(){
+			element.css('border', '').css('color', '');
+			callback && callback();
+		});
+	}
+}
+function onLoginUser(button){
+	updateStateButtonLoading(button, 'loading');
+	clearErrorClass(button);
+	var accountElement = $(button).parent().find('#account-input');
+	var passwordElement = $(button).parent().find('#password-input');
+	
+	var account = accountElement.val();
+	account = account ? account.trim() : '';
+	var password = passwordElement.val();
+	
+	var errorPanel = $(button).parent().find('.error-login-panel');
+	if(!account && (!validateEmail(account) || !validateAccount(account))) {
+		addErrorClass(accountElement);
+		errorPanel.text(localize.accountInvalid);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	if(!password) {
+		addErrorClass(passwordElement);
+		errorPanel.text(localize.invalidPass);
+		updateStateButtonLoading(button, 'failed', 1000);
+		return;
+	}
+	errorPanel.text('');
+	var password2 = encryptByDES(password, password + "." + password);
+	password = encryptPassword(account, password);
+	var obj = getDeviceInfo();
+	var objStr = obj == null ? '' : JSON.stringify(obj);
+	$.post('/api/login', { account: account, password: password, password2: password2, userDevice: objStr }, function(data){
+		onLoginSuccess(button, data);
+	});
+}
+function encryptPassword(account, password) {
+	var key = getMd5(account.toLowerCase() +"."+password);
+	return encryptByDES(password, key);
+}
+const LOGIN_FAILED = -1;
+const LOGIN_SUCCESS = 0;
+const LOGIN_ACCOUNT_IS_USED = 1;
+const LOGIN_ACCOUNT_NOT_EXIST = 2;
+const LOGIN_WRONG_PASSWORD = 3;
+const LOGIN_WRONG_PROVIDER = 4;
+const LOGIN_ACCOUNT_NOT_ACTIVATED = 5;
+const LOGIN_MOBILE_IS_USED = 6;
+
+function onLoginSuccess(button, data) {
+	var errorPanel = $(button).parent().find('.error-login-panel');
+	if(!data){
+		return;
+	}
+	switch(data.loginFailedReason) {
+	case LOGIN_FAILED: 
+		errorPanel.text(localize.errorGenaral);
+		updateStateButtonLoading(button, 'failed', 1000);
+		;break;
+	case LOGIN_SUCCESS: 
+		updateStateButtonLoading(button, 'success');
+		if(data.status == 1){//Config.USER_INFO_STATUS_WARNING
+			showModalErrorLogin('Tài khoản của bạn bị nghi ngờ học chung do đăng nhập trên quá nhiều thiết bị.'
+			+ ' Chúng tôi tạm thời sẽ logout tài khoản trên toàn bộ các thiết bị khác. Nếu bạn vi phạm 3 lần, chúng tôi buộc phải khoá tạm thời tài khoản!', function(){
+				onReloadAfterLogin(data.id);
+			});
+		} else if(data.status == 2){//block
+			onLogout(function(){
+				window.location.href = '/error?type=account-blocked';
+			});
+		} else {
+		  	 asyncCall(data.id, true);
+		    // onReloadAfterLogin(data.id);
+		}
+		;break;
+	case LOGIN_ACCOUNT_IS_USED: 
+		errorPanel.text(localize.accountIsUsed);
+		updateStateButtonLoading(button, 'failed', 1000);
+		;break;
+	case LOGIN_ACCOUNT_NOT_EXIST: 
+		errorPanel.text(localize.accountNotExist);
+		updateStateButtonLoading(button, 'failed', 1000);
+		;break;
+	case LOGIN_WRONG_PASSWORD: 
+		errorPanel.text(localize.wrongPassword);
+		updateStateButtonLoading(button, 'failed', 1000);
+		;break;
+	case LOGIN_WRONG_PROVIDER: 
+		errorPanel.text('LOGIN_WRONG_PROVIDER');
+		updateStateButtonLoading(button, 'failed', 1000);
+		;break;
+	case LOGIN_ACCOUNT_NOT_ACTIVATED: 
+		errorPanel.text(localize.accountnotactive);
+		updateStateButtonLoading(button, 'failed', 1000);
+		;break;
+	case LOGIN_MOBILE_IS_USED: 
+		errorPanel.text(localize.phoneinuse);
+		updateStateButtonLoading(button, 'failed', 1000);
+		;break;
+	}
+}
+
+async function asyncCall(userId, isReload) {
+  //console.log('calling', userId, isReload);
+  if(!userId || userId == ""){
+  	return;
+  }
+  //console.log('init firebase');
+  try {
+   //	const result = await ElearningCmsOrder.initIndex({ userId: userId });
+  //	console.log(result);
+  } catch (e){
+  } 
+  if(isReload){
+  	 onReloadAfterLogin(userId);
+  }
+}
+
+
+function showModalErrorLogin(msg, callback) {
+	var modal = showError('Thông báo', msg);
+	modal.find('.fa-times.icon__').css('background-color', 'red');
+	modal.find('.modal-body').css('color', 'red');
+	modal.on("hidden.bs.modal", function () {
+		callback();
+	});
+	return modal;
+}
+
+function onReloadAfterLogin(id){
+	if(window.location.pathname == "/"){
+		window.location.href = "?userid=" + id;
+	} else {
+		window.location.reload();
+	}
+}
+
+function getDeviceInfo(){
+	try{
+		var parser = new UAParser();
+	    if(parser){
+	    	//console.log(parser.getResult());
+	    	var result = parser.getResult();
+	        var obj = {};
+	        try{
+	        	obj.browserName = result.browser.name;
+	            obj.browserVersion = result.browser.version;
+	        } catch(e){
+	        }
+	    	try{
+	    		 obj.deviceModel = result.device.model;
+	    		 obj.deviceType = result.device.type;
+	        } catch(e){
+	        }
+	    	try{
+	    		 obj.osName = result.os.name;
+	    		 obj.osVersion = result.os.version;
+	        } catch(e){
+	        }
+	        var x = '';
+	        if (typeof(Storage) !== 'undefined') {  //hỗ trợ
+	        	x = localStorage.getItem(KEY_DEVICE);
+	        	if(!x){
+	        		x = makeid(40);
+					localStorage.setItem(KEY_DEVICE, x);
+	        	}
+			} else {  // không hỗ trợ
+			}
+	        obj.keyDevice = x;
+	        return obj;
+	    }
+	} catch(e){
+		console.log('getDeviceInfo e ', e)
+	}
+	return null;
+}
+
+
+function makeid(length) {
+   var result           = '';
+   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+   var charactersLength = characters.length;
+   for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
+
+/* login facebook function */
+function onLoginFacebook(button) {
+	if(usingSSO === 'true'){
+		var currentUrl = window.location.href;
+		var url = mainServerSSO + "oauth/authorize?client_id=" + clientIdSSO +"&redirect_uri=" + encodeURIComponent(domainUrlReDirect) 
+					+"&response_type=code&state="+ encodeURIComponent(currentUrl);
+		window.location.assign(url);
+	} else{
+		updateStateButtonLoading(button, 'loading');
+		loginFacebook(function(accessToken){
+			if(!accessToken){
+				updateStateButtonLoading(button, 'failed', 1000);
+				return;
+			}
+			$.get('https://graph.facebook.com/me?access_token='+accessToken, function(data){
+				if(data){
+					onGotFacebookInfo(button, data, accessToken);
+				} else {
+					updateStateButtonLoading(button, 'failed', 1000);
+				}
+			})
+		});
+	}
+}
+function loginFacebook(callback) {
+	if (FB === undefined || FB === null) {
+		alert(localize.errorGenaral);
+		callback(null)
+		return;
+	}
+	FB.login(function(response) {
+		if(response.authResponse && response.status === "connected") {
+			callback(response.authResponse.accessToken)
+		} else {
+			callback(null)
+		}
+	}, { scope : "email" });
+}
+function onGotFacebookInfo(button, userInfo, accessToken) {
+	userInfo.facebookToken = accessToken;
+	getUserIdLogined(accessToken, userInfo.id, function(data) {
+		if(data && data.length > 0){
+			userInfo.listUserLogined = data;
+		}
+		doLoginWith3RDApp(button, userInfo);
+	});
+}
+function getUserIdLogined(accessToken, idLoginNow, callback) {
+	$.get("https://graph.facebook.com/me/ids_for_business?access_token="+accessToken, function(data){
+		if(data && data.data && data.length > 0){
+			callback(data.filter(function(item){
+				return item.id !== idLoginNow
+			}));
+		} else 
+			callback(null);
+	});
+}
+
+function doLoginWith3RDApp(button, userInfo) {
+	$.post('/api/login-facebook', userInfo, function(data){
+		// nofity and reload
+		updateStateButtonLoading(button, 'success');
+		setTimeout(function(){
+			onReloadAfterLogin(data.id);
+		}, 500);
+	});
+}
+/* login facebook function */
+/* login function */
+
+function onForgetPassword(button){
+	var html = '<div id="revert-password-panel">';
+		html += '<div>'+localize.resetPassTitle+'</div>';
+		html += '<div><input></div>';
+		html += '<div class="error-notify_"></div>';
+	html += '</div>';
+	var modal = showQuestion(localize.resetPass+'?', html, function(data){
+		if(data){
+			var account = $('#revert-password-panel input').val();
+			var errorPanel = $('#revert-password-panel .error-notify_');
+			if(!account || account.length == 0){
+				errorPanel.html(localize.accountInvalid+'!');
+				return;
+			}
+			if(!validateAccount(account)){
+				errorPanel.html(localize.accountNotExist+'!');
+				return;
+			}
+			//console.log('do it account', account);
+			var button = modal.find('.btn-close-bottom[data-result="true"]');
+			button.addClass('buttonLoading');
+			updateStateButtonLoading(button, 'loading');
+			var newKey = getMd5(account.toLowerCase() +"."+ new Date().getTime());
+			$.post('/api/reset-password', { account: account}, function(data){
+				if(!data){
+					errorPanel.html(localize.errorGenaral+'!');
+					updateStateButtonLoading(button, 'failed');
+				} else if(data == 1){
+					errorPanel.html(localize.accountNotExist+'!');
+					updateStateButtonLoading(button, 'failed');
+				} else if(data == 2){
+					errorPanel.html(localize.accountNotEmail+'!');
+					updateStateButtonLoading(button, 'failed');
+				} else if(data == 3){
+					errorPanel.html(localize.accountNotExist+'!');
+					updateStateButtonLoading(button, 'failed');
+				} else {
+					updateStateButtonLoading(button, 'success');
+					setTimeout(function(){
+						modal.modal('hide');
+					}, 500);
+					setTimeout(function(){
+						showSuccess(localize.sendToEmail+": "+ data + ", "+localize.youcheckEmail+"!");
+					}, 600);
+				}
+			});
+		} else {
+			modal.modal('hide');
+		}
+	}, false);
+}
+var HTML_TEMP_UPDATE_PANEL = 
+	`<div class="update-phone-email-popup-panel">
+		<div class="item flex">
+			<label>Số điện thoại</label>
+			<div class="phone_">
+				<input
+					required="required" 
+					name="upd-phone-input" 
+					autocomplete="mobile" 
+					onchange="onChangeAndCheckCoincidePhone(this)"
+					data-status="`+Config.CHECK_COINCIDE_INFO_NOT_EXIST+`"
+				/>
+			<div class="error_"></div>
+		</div>
+		</div>
+		<div class="item flex">
+			<label>Email</label>
+			<div class="email_">
+				<input 
+					required="required" 
+					name="upd-email-input" 
+					autocomplete="email" 
+					onchange="onChangeAndCheckCoincideEmail(this)"
+					data-status="`+Config.CHECK_COINCIDE_INFO_NOT_EXIST+`"
+				/>
+			<div class="error_"></div>
+		</div>
+		</div>
+		<div class="item flex">
+			<button class="buttonLoading" type="submit">Cập nhật</button>
+		</div>
+		<button class="button-logout-x" type="logoutother">Đăng nhập tài khoản khác</button>
+	</div>`;
+
+function checkPhoneEmailOfUser(currentEmail, currentPhone, userId) {
+	var panel = $(HTML_TEMP_UPDATE_PANEL);
+	panel.find('input[name="upd-email-input"],input[name="upd-phone-input"]').attr('data-current-user', userId);
+	var modal = showNotice({ showNow: 'backdrop-keyboard', style: 'showQuestion', icon: '<i class="fal fa-question icon__"></i>', title: 'Cập nhập thông tin của bạn', msg: panel, function(data){}, autoHide: false, isObject: true });
+	var button = panel.find('button[type="submit"]');
+	var errorPhone = panel.find('.phone_ .error_');
+	var errorEmail = panel.find('.email_ .error_');
+	var inputPhone = panel.find('.phone_ input');
+	var inputEmail = panel.find('.email_ input');
+	var logout = panel.find('button[type="logoutother"]');
+	if(currentEmail){
+		inputEmail.val(currentEmail);
+	}
+	if(currentPhone){
+		inputPhone.val(currentPhone);
+	}
+	inputPhone.focus(function(event){
+		errorPhone.empty();
+	});
+	inputEmail.focus(function(event){
+		errorEmail.empty();
+	});
+	logout.click(function(){
+		onLogout();
+	});
+	
+	button.click(function(){
+		updateStateButtonLoading(button, 'run');
+		var phoneNumber = inputPhone.val();
+		var email = inputEmail.val();
+		if(!phoneNumber || !validationPhoneNumber(phoneNumber)) {
+			errorPhone.text(localize.invalidPhone);
+			updateStateButtonLoading(button, 'failed');
+			return;
+		}
+		if(Config.CHECK_COINCIDE_INFO && inputPhone.attr('data-status') == Config.CHECK_COINCIDE_INFO_EXIST){
+			inputPhone.text('Số điện thoại đã được sử dụng!');
+			updateStateButtonLoading(button, 'failed', 1000);
+			return;
+		}
+		if(!email || !validateEmail(email)) {
+			errorEmail.text(localize.invalidEmail);
+			updateStateButtonLoading(button, 'failed');
+			return;
+		}
+		if(Config.CHECK_COINCIDE_INFO && inputEmail.attr('data-status') == Config.CHECK_COINCIDE_INFO_EXIST){
+			errorEmail.text('Email đã được sử dụng!');
+			updateStateButtonLoading(button, 'failed', 1000);
+			return;
+		}
+		$.post('/api/update-phone-number-and-email', { phoneNumber : phoneNumber, email : email }, function(data){
+			if(data == 1){
+				modal.modal('hide');
+				updateStateButtonLoading(button, 'success');
+				setTimeout(function(){
+					showSuccess('Cập nhật thành công!');
+				}, 500);
+			} else {
+				showError('Cập nhật không thành công! Thử lại sau!');
+				updateStateButtonLoading(button, 'failed');
+			}
+		});
+	});
+}
+
+//function checkLoginOneAccount(listenUrl) {
+//	var version = 2;
+//	var count = 0;
+//	getFullIpAddress(function(ip){
+//		if(!!ip && !!firebase){
+//			if(version == 2){
+//				firebase.database().ref(listenUrl).set({ ipAddress: ip }, function(error) {
+//					if(!!error){
+//						return;
+//					}
+//					count++;
+//					//console.log('sended data', count);
+//				});
+//				//console.log('count before', count);
+//				firebase.database().ref(listenUrl).on("value", function(data) {
+//					//console.log('count after', count, 'first', data.val());
+//					if(count > 0){
+//						var loginedIp = data.val();loginedIp = loginedIp ? loginedIp.ipAddress : null;
+//						//console.log('loginedIp', loginedIp, 'newIp', ip, 'check', (!!loginedIp && loginedIp !== ip));
+//						if(!!loginedIp && loginedIp !== ip){
+//							showError(localize.theAccountIsBeingUsed);
+//							setTimeout(function(){
+//								onLogout();
+//							}, 3000);
+//						}
+//					}
+//				});
+//			} else {
+//				KSFirebase.changeValue(listenUrl, { ipAddress: ip }, function(data){});
+//				KSFirebase.onChangeValue(listenUrl, function(data){
+//					if(data.ipAddress && (data.ipAddress !== ip || data.ipAddress.indexOf(ip) < 0)){
+//						showError(localize.theAccountIsBeingUsed);
+//						setTimeout(function(){
+//							onLogout();
+//						}, 3000);
+//					}
+//				});
+//			}
+//		}
+//	});
+//}

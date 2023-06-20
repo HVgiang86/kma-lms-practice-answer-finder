@@ -58,7 +58,7 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "A";
+        return "No Data";
     }
 
     public static void main(String[] args) {

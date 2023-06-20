@@ -1,0 +1,97 @@
+    
+var player;
+
+var YoutubePlayer = {
+	
+	initVideo: function(videoId, panelId, startTime) {
+      player = new YT.Player(panelId, {
+        height: '100%',
+        width: '100%',
+        videoId: videoId,
+        playerVars: { 'rel': 0,
+      	  			'autoplay': 1,
+                      'controls': 1 ,
+                      'color': 'blue',
+                      'start': startTime
+//                      'playlist': ''
+                      },
+//        events: {
+//          'onReady': YoutubePlayer.onPlayerReady(),
+//          'onStateChange': YoutubePlayer.onPlayerStateChange(),
+//        }
+      });
+      if(player && player.a){
+	        player.a.setAttribute('webkitallowfullscreen', '');
+	        player.a.setAttribute('mozallowfullscreen', '');
+	        player.a.setAttribute('allowfullscreen', '1');
+      }
+		//console.log('end initVideo');
+    },
+      
+    seekTo: function(newTime){
+        //console.log('newTime60 ', newTime)
+        	if(player){
+        		player.seekTo(newTime, true);
+        	}
+        },
+
+        // 4. The API will call this function when the video player is ready.
+//    onPlayerReady: function(event) {
+//          event.target.playVideo();
+//    },
+
+        setVolum: function (x){
+        	if(player){
+        		player.setVolume(x)
+        	}
+        },
+        
+        getDuration:function (){
+        	return player.getDuration();
+        },
+        
+        getCurrentTime: function(){
+        	if(player){
+        		return  player.getCurrentTime();
+        	}else{
+        		return  0;
+        	}
+        },
+
+        onPlayerStateChange: function(event) {
+          if (event.data == YT.PlayerState.CUED ) {
+              console.log('event: CUED')
+          }
+        },
+
+        stopVideo: function () {
+        	if(player){
+        		player.stopVideo();
+        	}
+        },
+        
+        stopVideo: function () {
+        	if(player){
+        		console.log('player ', player);
+        		player.stopVideo();
+        	}
+        },
+        
+        isPauseVideo: function () {
+        	if(player){
+        		player.isPauseVideo();
+        	}
+        },
+        
+        pauseVideo: function () {
+        	if(player){
+        		player.pauseVideo();
+        	}
+        },
+        
+        playVideo:function () {
+        	if(player){
+        		player.playVideo();
+        	}
+        },
+}

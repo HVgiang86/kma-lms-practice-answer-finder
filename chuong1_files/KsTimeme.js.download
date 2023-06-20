@@ -1,0 +1,80 @@
+const LESSON_PAGE = 1;
+const EXERCISE_PAGE = 2;
+const TEST_PAGE = 3;
+const CLASSES = 4;
+const DOCUMENT_PLACE = 5;
+var currentTimeUpdate = 0;
+
+function  initTimeOnSite(){
+//	var typePage = -1
+//	var path = window.location.pathname;
+//	if(path.includes(PLACE_TOKEN.CLASSES)){
+//		typePage = CLASSES;
+//	} else if(path.includes(PLACE_TOKEN.LESSON_PLACE)){
+//		typePage = LESSON_PAGE;
+//	} else if(path.includes(PLACE_TOKEN.MEMBER_PLACE)){
+//		typePage = MEMBER_PLACE;
+//	} else if(path.includes(PLACE_TOKEN.DOCUMENT_PLACE)){
+//		typePage = DOCUMENT_PLACE;
+//	}  
+	if(USER_ALL_INFO.isLoggedIn && USER_ALL_INFO.courseId > -1){
+		var topicId = USER_ALL_INFO.topicId > 0 ? USER_ALL_INFO.topicId : USER_ALL_INFO.courseId;
+//		console.log('topicId ', topicId)
+		var obj = {
+			userId : USER_ALL_INFO.id,
+			courseId : USER_ALL_INFO.courseId,
+			topicId : topicId
+		}
+		TimeMe.initialize({
+			idleTimeoutInSeconds: 180, // seconds 
+		});
+		// Executes the first 5 times a user leaves the page
+		TimeMe.callWhenUserLeaves(function(){
+			updateTime(obj)
+//			var time =  TimeMe.getTimeOnCurrentPageInSeconds()
+//			console.log("The user is not currently viewing the page! ", time);
+		}, 500);
+
+		// Executes every time a user returns
+		TimeMe.callWhenUserReturns(function(){
+			var time = TimeMe.getTimeOnCurrentPageInSeconds();
+//			console.log("The user has come back! ", time);
+		});
+		setInterval(function(){
+			updateTime(obj)
+		}, 10 * 60 * 1000)//5p
+		$(window).on("unload", function(e) {
+			updateTime(obj)
+		});
+	}
+	
+	function updateTime(obj){
+		try {
+			var totalTime = TimeMe.getTimeOnCurrentPageInSeconds();
+			var time = totalTime - currentTimeUpdate;
+			currentTimeUpdate = totalTime;
+			if(time <= 0 || !obj){
+				time = 0;
+				return;
+			}
+			obj.timeOnSite = time;
+//			console.log('obj ', obj)
+			$.ajax({
+				type : 'POST',
+				url : '/api/updateTimeOnSite',
+				dataType : 'json',
+				data : JSON.stringify(obj),
+				contentType : 'application/json',
+				async : false,
+				cache : false,
+				processData : false,
+				success : function( obj ) {
+				},
+				error : function(e) {
+				}
+			});
+		} catch (e) {
+			// TODO: handle exception
+		}
+	}
+}
