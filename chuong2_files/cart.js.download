@@ -1,0 +1,140 @@
+var useCookieForCart = false || (typeof(Storage) === "undefined");
+class CartData {
+	static getCartItems(){
+		if(!useCookieForCart){
+			let data = localStorage.getItem('cart-items');
+			return data ? JSON.parse(data) : [];
+		}
+		let data = Cookies.get('cart-items');
+		return data ? JSON.parse(data) : [];
+	}
+	
+	static removeCardItems() {
+//		console.log('removeCardItems');
+		if(useCookieForCart){
+			Cookies.remove('cart-items');
+		} else {
+			localStorage.removeItem("cart-items");
+		}
+	}
+	
+	static updateCartItems(items) {
+		if(useCookieForCart){
+			Cookies.set('cart-items', items);
+		} else {
+			localStorage.setItem("cart-items", JSON.stringify(items));
+		}
+	}
+}
+
+
+function removeCartItemFromCookies(ids) {
+	var itemIds = getCartItemsFromCookies().filter(function(item){
+		return !ids || ids.indexOf(item) < 0;
+	});
+//	if(!USER_ALL_INFO.isLoggedIn){
+		updateCartItem(itemIds);
+//	} else {
+//		$.post('/api/remove-cart-items', { userId: USER_ALL_INFO.id, itemIds: itemIds }, function(data){
+//			updateCartItem(data);
+//		});
+//	}
+}
+
+function getCartItemsFromCookies() {
+	var cartItemsStr = CartData.getCartItems();
+//	console.log('cartItemsStr', cartItemsStr);
+	if(cartItemsStr){
+		if($.isArray(cartItemsStr)){
+			return cartItemsStr;
+		}
+		var cartItems = JSON.parse(cartItemsStr);
+		if($.isArray(cartItems)) {
+			return cartItems;
+		}
+	}
+	return [];
+}
+
+jQuery(document).ready(function ($) {
+	loadCartItemId();
+});
+
+function loadCartItemId(callback) {
+	var itemIdsFromCookies = getCartItemsFromCookies();
+	if(!USER_ALL_INFO.CARTS){
+		USER_ALL_INFO.CARTS = [];
+	}
+	itemIdsFromCookies && itemIdsFromCookies.forEach(function(item){
+		USER_ALL_INFO.CARTS.indexOf(item) < 0 && USER_ALL_INFO.CARTS.push(item);
+	});
+		
+//	if(!USER_ALL_INFO.isLoggedIn){
+		updateCartItem(USER_ALL_INFO.CARTS);
+		callback && callback(USER_ALL_INFO.CARTS);
+//	} else {
+//		console.log('itemIdsFromCookies', itemIdsFromCookies);
+//		$.post('/api/count-cart-items', { userId: USER_ALL_INFO.id, itemIdsCookie: itemIdsFromCookies }, function(data){
+//			console.log('js data', data);
+//			data && data.forEach(function(item){
+//				USER_ALL_INFO.CARTS.indexOf(item) < 0 && USER_ALL_INFO.CARTS.push(item);
+//			});
+//			updateCartItem(USER_ALL_INFO.CARTS);
+//			callback && callback(USER_ALL_INFO.CARTS);
+//			typeof updateCartItemAsync === 'function' && updateCartItemAsync(USER_ALL_INFO.CARTS);
+//		});
+//	}
+}
+
+function updateCartItem(data) {
+	if(!data){
+		data = [];
+	}
+	var _elem = $('#count-cart-html ._count');
+	if(data && data.length > 0){
+		_elem.show();
+		_elem.html(data.length);
+	} else {
+		_elem.hide();
+	}
+	CartData.updateCartItems(data);
+}
+function addCartItem(itemId, itemType, callback, showNotice) {
+	showNotice = typeof showNotice === 'undefined' || !!showNotice;
+	var cartItems = getCartItemsFromCookies();
+	if(cartItems.indexOf(itemId) > -1){
+		if(showNotice){
+			$.toaster({message : 'Khoá học đã có trong giỏ hàng!', settings : { timeout : 3000 } });
+		}
+		return;
+	} else {
+		cartItems.push(itemId);
+	}
+//	if(!USER_ALL_INFO.id || !USER_ALL_INFO.isLoggedIn){
+		callback && callback(cartItems);
+		showNotice && showToasterAddCartSuccess();
+		updateCartItem(cartItems);
+//		return;
+//	}
+//	$.post('/api/add-cart-item', { userId: USER_ALL_INFO.id, itemId: itemId, itemType: itemType }, function(data){
+////		console.log('add-cart-item', data);
+//		if(typeof data.status !== 'undefined'){
+//			if(data.status == -2 && showNotice){
+//				openLoginDialog();
+//			}
+//			if(data.status == -1 && showNotice){
+//				$.toaster({message : 'Khoá học đã có trong giỏ hàng!', settings : { timeout : 3000 } });
+//			}
+//			return;
+//		}
+//		data.items.forEach(function(item){
+//			cartItems.indexOf(item) < 0 && cartItems.push(item);
+//		})
+//		callback && callback(data);
+//		showNotice && showToasterAddCartSuccess();
+//		updateCartItem(cartItems);
+//	});
+}
+function showToasterAddCartSuccess() {
+	$.toaster({message : 'Đã thêm vào giỏ hàng!', settings : { timeout : 3000 } });
+}

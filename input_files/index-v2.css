@@ -1,0 +1,236 @@
+body, table td, select, button {
+	font-family: 'Roboto', sans-serif;
+}
+
+a {
+	cursor: pointer;
+}
+
+.button_login_in_login_popup {
+	color: white;
+}
+
+.title-main {
+	text-align: center;
+	position: relative;
+	text-transform: uppercase;
+	margin-bottom: 30px;
+	margin-top: 30px;
+	font-family: 'Roboto Slab', serif;
+	font-weight: bold;
+}
+
+.player-poster {
+	background-image:
+		url("https://storage.googleapis.com/comaiphuong-edu-media/images/nenchen-1.png")
+		!important;
+}
+
+.title-main:BEFORE {
+	content: "";
+	width: 70px;
+	height: 2px;
+	position: absolute;
+	left: calc(50% - 35px);
+	bottom: -23px;
+}
+
+.title-main:AFTER {
+	content: "";
+	width: 40px;
+	height: 6px;
+	position: absolute;
+	left: calc(50% - 20px);
+	bottom: -25px;
+}
+
+@media ( max-width : 768px) {
+	.title-main {
+		padding: 0 20px;
+	}
+}
+
+.title-block {
+	font-weight: bold;
+	position: relative;
+	font-size: 17px;
+	margin-bottom: 12px;
+}
+
+.title-block:after {
+	content: "";
+	width: 80px;
+	height: 2px;
+	position: absolute;
+	bottom: -7px;
+	left: 0;
+}
+
+#login-dialog-img-panel>img {
+	border-radius: 35px;
+}
+
+/* Block pane; */
+.custom-reset-row-col {
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.custom-reset-row-col.left-panel {
+	padding-right: 5px !important;
+}
+
+.custom-reset-row-col.right-panel {
+	padding-left: 5px !important;
+}
+
+@media ( max-width : 768px) {
+	.custom-reset-row-col.left-panel {
+		padding-right: 0px !important;
+	}
+	.custom-reset-row-col.right-panel {
+		padding-left: 0px !important;
+	}
+}
+
+.custom-block-panel {
+	margin-bottom: 10px !important;
+}
+
+.custom-block-panel>div {
+	background-color: white;
+	padding: 10px !important;
+}
+
+.content-block-panel {
+	border: 1px solid #ddd;
+	background: white;
+	margin-bottom: 10px !important;
+	display: flex;
+	flex-direction: column;
+}
+
+.main-block-content-panel {
+	padding: 10px;
+}
+
+.main-block-header-panel {
+	padding: 10px;
+	border-bottom: 1px solid #ddd;
+	position: relative;
+	background-color: white;
+	display: flex;
+	align-items: center
+}
+
+.text-icon-block-panel {
+	margin-right: 10px;
+}
+
+.text-title-block-panel {
+	font-weight: bold;
+}
+
+.main-block-header-panel:before {
+	content: "";
+	width: 2px;
+	background: red;
+	height: 100%;
+	left: -1px;
+	z-index: 2;
+	top: 0;
+	position: absolute;
+}
+/* Block pane; */
+.path-link-background-panel {
+	background: white;
+	margin: 0 !important;
+	margin-bottom: 10px;
+	border-bottom: 1px solid #ddd;
+}
+
+.button-submit-play-game-dialog-live-stream {
+	padding: 8px 20px;
+	background: red;
+	color: white;
+	border: 0;
+	float: right;
+	margin-bottom: 10px;
+	margin-right: 10px;
+	border-radius: 3px;
+}
+
+.title-block:after {
+	width: 60px;
+}
+
+.topic-item-text-style-2 [target=_blank] {
+	color: #333;
+}
+
+.item-short-review {
+	padding-top: 15px;
+	align-items: baseline
+}
+
+.item-short-review img {
+	width: 16px;
+	margin-right: 12px;
+}
+
+.item-short-review label {
+	font-weight: 500;
+	margin-bottom: 0
+}
+
+.dictWordPanel {
+	background: white;
+	border: 1px solid #ddd;
+	padding: 7px;
+	width: 450px;
+}
+
+.edit-for-admin {
+	position: fixed;
+	right: 0;
+	z-index: 10
+}
+
+.edit-for-admin a {
+	background: #fe5c5c;
+	color: white !important;
+	padding: 10px 20px;
+	border-radius: 3px;
+	cursor: pointer;
+	text-transform: uppercase;
+}
+
+.btnSearchbyScore-block-panel {
+	font-weight: bold;
+	background-color: transparent;
+	border: none;
+	padding: 0px 0px 0px 15px;
+	border-left: 1px solid;
+	margin-left: 15px;
+}
+
+.btnSearchbyScore-block-panel-hover:hover {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.panelSearchRanking {
+	display: flex;
+	align-items: center;
+	justify-content: space-evenly;
+}
+
+.customTextRankingblock {
+	padding: 8px 15px !important;
+	font-size: 12px;
+}
+
+.main-block-panel[topic-tree-empty="true"][videos-live-stream-empty="true"][videos-virtual-class="true"]
+	{
+	display: none;
+}

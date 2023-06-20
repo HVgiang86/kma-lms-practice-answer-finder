@@ -1,0 +1,56 @@
+jQuery(document).ready(function ($) {
+	checkAvatar();
+});
+
+function checkAvatar(element, log) {
+//	log && console.clear();
+//	log && console.log('checkAvatar', element);
+//	let defaultAvatarUrl = '/resources/images/default/default_avatar.png';
+	if(typeof currentTime === 'undefined'){
+		currentTime = new Date().getTime();
+	}
+	
+	$.each(element ? $(element) : $('.img-avatar'), function(index, item){
+		item = $(item);
+		if(item.children().length > 0){
+			return;
+		}
+		let img = $('<img />');
+		item.append(img);
+		let userId = item.data('id');
+		let dfAvatar = item.data('root-url');
+		if(!dfAvatar){
+			dfAvatar = defaultAvatarUrl;
+		}
+//		log && console.log('checkAvatar item userId', userId);
+		if(userId){
+			if(isFacebookId(userId)){
+				avatarUrl = "https://graph.facebook.com/v7.0/" + userId +"/picture?width=100";
+			} else {
+				avatarUrl = 'https://storage.googleapis.com/' + Config.BUCKET_NAME + "/images/"+userId+"?t="+currentTime+"&ignoreCache=1";
+			}
+			img.attr('src', avatarUrl);
+			img.off('error').on('error', function () {
+				if($(this).attr('src').indexOf(dfAvatar) < 0){
+					$(this).attr('src', dfAvatar);
+				}
+			});
+		} else {
+			img.attr('src', dfAvatar);
+		}
+		try {
+			img.off('load').on('load', function() {
+				item.addClass('loaded');
+			});
+		} catch(e){
+			setTimeout(function(){
+				item.addClass('loaded');
+			}, 5000);
+		}
+	});
+}
+
+function isFacebookId(str){
+	str = "" + str;
+	return str && !!str.match(/^\d+$/) && str.length >= 15;
+}

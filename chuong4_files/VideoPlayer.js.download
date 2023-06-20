@@ -1,0 +1,329 @@
+var JWPLAYER = {
+		player : null,
+		callbackEvent : null,
+		currentTime : -1,
+		cuepointData : {},
+	
+		initVideo : function(videoUrl, panelId, startTime, isVideoLive, callback ) {
+			//console.log('videoUrl JWPLAYER ', videoUrl, 'isVideoLive ', isVideoLive , ' startTime ', startTime)
+			this.player = jwplayer(panelId);
+			this.player.setup({
+				file: videoUrl,
+				autostart : true,
+				controls : !isVideoLive,
+				repeat: false,
+				mute: false,
+				volume: 100,
+				playbackRateControls: [0.75, 1, 1.25, 1.5, 2.0],
+				floating: false
+			});
+			this.player.on('ready', function(){
+				if (startTime && startTime > 0) {
+					JWPLAYER.seekToJs(startTime)
+				}
+			})
+			var fistPlay = true;
+			this.player.on('play', function(){
+				if(fistPlay){
+					fistPlay = false;
+					var duration = JWPLAYER.getDuration();
+					callback(duration)
+					if(startTime > duration){
+						JWPLAYER.pauseVideo();
+					}
+				}
+			})
+			JWPLAYER.currentTime = -1;
+			JWPLAYER.cuepointData = {};
+		
+		},
+	
+		playVideo : function() {
+			if (this.player) {
+				var curentTime = Math.round(JWPLAYER.getCurrentTime())
+				var duration = Math.round(JWPLAYER.getDuration())
+				if(curentTime < duration){
+					this.player.play();
+				}
+			}
+		},
+	
+		pauseVideo : function() {
+			if (this.player) {
+				this.player.pause();
+			}
+		},
+		
+		addTimeExercises(data){
+//			var arr = [];
+//			for (var i = 0; i < data.length; i++) {
+//				arr.push({
+//				    begin: data[i].startTime,
+//				    text: data[i].title
+//				  })
+//			}
+//			if(this.player){
+//				this.player.addCues(arr);
+//			}
+		},
+	
+		seekToJs : function(time) {
+			if (this.player) {
+				this.player.seek(time);
+			}
+		},
+	
+		getCurrentTime : function() {
+			var currentTime = 0;
+			if (this.player) {
+				currentTime = this.player.getPosition();
+			}
+			return currentTime;
+		},
+	
+		distroyVideo : function() {
+			if (this.player) {
+				this.player.stop();
+			}
+		},
+	
+		getDuration : function() {
+			var lengthOfVideo = 0;
+			if (this.player) {
+				lengthOfVideo = this.player.getDuration();
+				lengthOfVideo = Math.floor(lengthOfVideo);
+			}
+//			console.log('lengthOfVideo ', lengthOfVideo)
+			return lengthOfVideo;
+		},
+		
+
+		setFullScreen : function() {
+			if (this.player) {
+				this.player.setFullscreen(true);
+			}
+		},
+		
+		setMute: function (state){
+			if(this.player){
+				this.player.setMute(state)
+			}
+		},
+	
+		exitFullScreen : function() {
+	//		if (this.player) {
+	//			this.player.exitFullscreen();
+	//		}
+		},
+	
+		addCuepointObj : function(obj) {
+			if(obj){
+				this.cuepointData[obj.startTime] = obj;
+			}
+		},
+	
+		setCallBackEvent : function(callbackEvent) {
+			this.callbackEvent = callbackEvent;
+		},
+	
+		callbackTimeUpdate : function(callbackTimeEvent) {
+			if (this.player) {
+				this.onTimeUpdate(callbackTimeEvent)
+			} else {
+				setTimeout(function() {
+					JWPLAYER.onTimeUpdate(callbackTimeEvent)
+				}, 3000);
+			}
+		},
+		
+		onTimeUpdate: function(callbackTimeEvent){
+			this.player.on('time', function(e){
+				var time = Math.round(JWPLAYER.getCurrentTime())
+				if(!e.viewable){
+					var duration = Math.round(JWPLAYER.getDuration())
+					if(time < duration){
+						JWPLAYER.playVideo();
+					}
+                }
+				
+				if (JWPLAYER.currentTime != time) {
+					JWPLAYER.currentTime = time;
+					if(callbackTimeEvent){
+						callbackTimeEvent(JWPLAYER.currentTime);
+					} else{
+						console.log('JWPLAYER.callbackEvent ', callbackTimeEvent)
+					}
+					if(JWPLAYER.cuepointData[time]){
+						var obj = JWPLAYER.cuepointData[time]
+						console.log('cuepointData ', obj)
+						 if(JWPLAYER.callbackEvent){
+							 JWPLAYER.callbackEvent(obj)
+							console.log("callbackEvent okii ", obj);
+						} else{
+	//						console.log('VIDEOJS.callbackEvent ', VIDEOJS.callbackEvent)
+						}
+					}
+				}
+			})
+		}
+	}
+
+	var VIDEOJS = {
+		player : null,
+		callbackEvent : null,
+		currentTime : -1,
+		evented: false, 
+
+		initVideo : function(videoUrl, panelId, startTime, isSetingLive, callback) {
+		//	console.log('initVideo  panelId VIDEOJS '+ panelId, 'videoUrl ', videoUrl)
+			videojs(panelId, {
+				playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+			}).ready(function() {
+				var typeVideo = (videoUrl && videoUrl.includes('.m3u8')) ? 'application/x-mpegURL' : 'video/mp4';
+				this.seekButtons({
+				    forward: 10,
+				    back: 10
+				  });
+				VIDEOJS.player = this;
+				this.src({
+					src : videoUrl,
+					type : typeVideo,
+				// withCredentials: true,
+				// useCueTags : true
+				});
+				if (startTime && startTime > 0) {
+					VIDEOJS.seekToJs(startTime)
+				}
+				VIDEOJS.player.play();
+				VIDEOJS.player.cuepoints();
+				VIDEOJS.currentTime = -1;
+				
+				var fistPlay = true;
+				this.on('play', function(){
+					if(fistPlay){
+						fistPlay = false;
+						setTimeout(function(){
+							var duration = VIDEOJS.getDuration();
+							callback(duration)
+						}, 1000)
+					}
+				})
+			});
+		},
+
+		playVideo : function() {
+			if (this.player) {
+				this.player.play();
+			}
+		},
+
+		pauseVideo : function() {
+			if (this.player) {
+				this.player.pause();
+			}
+		},
+
+		seekToJs : function(time) {
+			if (this.player) {
+				this.player.currentTime(time);
+			}
+		},
+
+		getCurrentTime : function() {
+			var currentTime = 0;
+			if (this.player) {
+				currentTime = this.player.currentTime();
+			}
+//			console.log('currentTime ', currentTime)
+			return currentTime;
+		},
+
+		distroyVideo : function() {
+			if (this.player) {
+				this.player.dispose();
+			}
+		},
+
+		getDuration : function() {
+			var lengthOfVideo = 0;
+			if (this.player) {
+				lengthOfVideo = this.player.duration();
+				lengthOfVideo = Math.floor(lengthOfVideo);
+			}
+			return lengthOfVideo;
+		},
+
+		exitFullScreen : function() {
+			if (this.player) {
+				this.player.exitFullscreen();
+			}
+		},
+
+		addCuepointObj : function(obj) {
+//			console.log('obj ', obj, ' player ', this.player)
+			this.player.addCuepoint({
+				namespace : "logger",
+				start : obj.startTime,
+				end : obj.endTime,
+				onStart : function(params) {
+					if(!VIDEOJS.evented){
+						VIDEOJS.evented = true
+						setTimeout(function(){ VIDEOJS.evented = false }, 1000);
+						console.log('params ', params)
+						if (params.error) {
+							console.error("Error at second 4");
+						} else {
+							if(VIDEOJS.callbackEvent){
+								console.log("callbackEvent okii ", obj);
+								VIDEOJS.callbackEvent(obj)
+							} else{
+//								console.log('VIDEOJS.callbackEvent ', VIDEOJS.callbackEvent)
+							}
+						}
+					}
+				},
+				onEnd : function(params) {
+					// console.log("on end 4 ", params);
+				},
+				params : {
+					error : false,
+					obj : obj
+				}
+			})
+		},
+		
+		setFullScreen : function() {
+			if (this.player) {
+				this.player.requestFullscreen();
+			}
+		},
+
+		setCallBackEvent : function(callbackEvent) {
+			this.callbackEvent = callbackEvent;
+		},
+
+		callbackTimeUpdate : function(callbackTimeEvent) {
+			if (this.player) {
+				this.onTimeUpdate(callbackTimeEvent)
+			} else {
+				setTimeout(function() {
+					this.onTimeUpdate(callbackTimeEvent)
+				}, 3000);
+			}
+		},
+		
+		onTimeUpdate: function(callbackTimeEvent){
+			this.player.on('timeupdate', function() {
+				var time = Math.round(VIDEOJS.getCurrentTime())
+				if (VIDEOJS.currentTime != time) {
+					VIDEOJS.currentTime = time;
+					if(callbackTimeEvent){
+						callbackTimeEvent(VIDEOJS.currentTime);
+					} else{
+						console.log('VIDEOJS.callbackEvent ', callbackTimeEvent)
+					}
+					
+				}
+			});
+		}
+	}
