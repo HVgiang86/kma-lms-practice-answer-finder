@@ -64,7 +64,7 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("Hello world!");
 
-        System.out.println("Chuong ma^'y? Nhập từ 2 tới 5");
+        System.out.println("Chuong ma^'y? Nhập từ 1 tới 5");
         int chapter = new Scanner(System.in).nextInt();
 
         String fileDapAn = "chuong";
